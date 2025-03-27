@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="m-0 font-weight-bold">
+                <i class="fas fa-question-circle"></i> Questions for {{ quiz.chapter.name }} Quiz ({{ quiz.date_of_quiz.strftime('%d-%m-%Y') }})
+            </h2>
+            <div>
+                <a href="{{ url_for('admin.quizzes', chapter_id=quiz.chapter_id) }}" class="btn btn-light mr-2">
+                    <i class="fas fa-arrow-left"></i> Back to Quizzes
+                </a>
+                <a href="{{ url_for('admin.create_question', quiz_id=quiz.id) }}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Question
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if questions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>Type</th>
+                                <th>Options</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ question.question_statement }}</td>
+                                    <td>
+                                        {% if question.option1 == "True" and question.option2 == "False" and not question.option3 and not question.option4 %}
+                                            <span class="badge bg-info">True/False</span>
+                                        {% elif not question.option2 and not question.option3 and not question.option4 %}
+                                            <span class="badge bg-warning">Short Answer</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">Multiple Choice</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if question.option1 == "True" and question.option2 == "False" and not question.option3 and not question.option4 %}
+                                            Correct: {{ "True" if question.correct_answer == 1 else "False" }}
+                                        {% elif not question.option2 and not question.option3 and not question.option4 %}
+                                            Answer: {{ question.option1 }}
+                                        {% else %}
+                                            <small>
+                                                <strong>A:</strong> {{ question.option1 }}<br>
+                                                <strong>B:</strong> {{ question.option2 }}<br>
+                                                {% if question.option3 %}<strong>C:</strong> {{ question.option3 }}<br>{% endif %}
+                                                {% if question.option4 %}<strong>D:</strong> {{ question.option4 }}<br>{% endif %}
+                                                <strong>Correct:</strong> 
+                                                {% if question.correct_answer == 1 %}A{% endif %}
+                                                {% if question.correct_answer == 2 %}B{% endif %}
+                                                {% if question.correct_answer == 3 %}C{% endif %}
+                                                {% if question.correct_answer == 4 %}D{% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('admin.edit_question', question_id=question.id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Delete Question Modal -->
+                                        <div class="modal fade" id="deleteQuestionModal{{ question.id }}" tabindex="-1" aria-labelledby="deleteQuestionModalLabel{{ question.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title" id="deleteQuestionModalLabel{{ question.id }}">Confirm Deletion</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="mb-0">Are you sure you want to delete this question?</p>
+                                                        <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <a href="{{ url_for('admin.delete_question', question_id=question.id) }}" class="btn btn-danger">Delete</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <p class="text-muted"><strong>Total Questions:</strong> {{ questions|length }}</p>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No questions found for this quiz. 
+                    <a href="{{ url_for('admin.create_question', quiz_id=quiz.id) }}" class="alert-link">Add your first question</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

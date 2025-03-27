@@ -1,0 +1,111 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-6">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </h1>
+        <p class="lead">Welcome, {{ current_user.full_name }}!</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-tasks mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ total_quizzes }}</div>
+                <div class="stat-label">Available Quizzes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-clipboard-check mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ attempted_quizzes }}</div>
+                <div class="stat-label">Attempted Quizzes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subjects -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Available Subjects</h5>
+            </div>
+            <div class="card-body">
+                {% if subjects %}
+                    <div class="row">
+                        {% for subject in subjects %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ subject.name }}</h5>
+                                    <p class="card-text text-truncate-2">{{ subject.description }}</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <a href="{{ url_for('user.chapters', subject_id=subject.id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-book-open"></i> View Chapters
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center py-3">No subjects available yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Attempts -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Quiz Attempts</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_scores %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in recent_scores %}
+                            <tr>
+                                <td>{{ score.quiz.chapter.name }}</td>
+                                <td>{{ score.total_scored }} / {{ score.quiz.total_questions }}</td>
+                                <td>{{ score.time_stamp_of_attempt.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.results', score_id=score.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View Results
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">You haven't attempted any quizzes yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

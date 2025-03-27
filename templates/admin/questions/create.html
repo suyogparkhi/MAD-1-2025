@@ -1,0 +1,235 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title mb-0">
+                    <i class="fas fa-plus"></i> Add New Question
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.create_question', quiz_id=quiz.id) }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.question_text.label(class="form-label") }}
+                        {% if form.question_text.errors %}
+                            {{ form.question_text(class="form-control is-invalid", rows=3) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.question_text.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.question_text(class="form-control", rows=3, placeholder="Enter your question here...") }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            {{ form.question_type.label(class="form-label") }}
+                            {% if form.question_type.errors %}
+                                {{ form.question_type(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.question_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.question_type(class="form-select") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form.difficulty.label(class="form-label") }}
+                            {% if form.difficulty.errors %}
+                                {{ form.difficulty(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.difficulty.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.difficulty(class="form-select") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {{ form.marks.label(class="form-label") }}
+                            {% if form.marks.errors %}
+                                {{ form.marks(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.marks.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.marks(class="form-control", placeholder="e.g., 5") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Multiple Choice Options Section -->
+                    <div id="multipleChoiceSection" class="mb-3 border p-3 rounded bg-light">
+                        <h4>Answer Options</h4>
+                        
+                        <div class="mb-3">
+                            {{ form.option_a.label(class="form-label") }}
+                            {% if form.option_a.errors %}
+                                {{ form.option_a(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.option_a.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.option_a(class="form-control", placeholder="Option A") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_b.label(class="form-label") }}
+                            {% if form.option_b.errors %}
+                                {{ form.option_b(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.option_b.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.option_b(class="form-control", placeholder="Option B") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_c.label(class="form-label") }}
+                            {% if form.option_c.errors %}
+                                {{ form.option_c(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.option_c.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.option_c(class="form-control", placeholder="Option C") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.option_d.label(class="form-label") }}
+                            {% if form.option_d.errors %}
+                                {{ form.option_d(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.option_d.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.option_d(class="form-control", placeholder="Option D") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.correct_option.label(class="form-label") }}
+                            {% if form.correct_option.errors %}
+                                {{ form.correct_option(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.correct_option.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.correct_option(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- True/False Section -->
+                    <div id="trueFalseSection" class="mb-3 border p-3 rounded bg-light">
+                        <h4>True/False Answer</h4>
+                        
+                        <div class="mb-3">
+                            {{ form.correct_boolean.label(class="form-label") }}
+                            {% if form.correct_boolean.errors %}
+                                {{ form.correct_boolean(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.correct_boolean.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.correct_boolean(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Short Answer Section -->
+                    <div id="shortAnswerSection" class="mb-3 border p-3 rounded bg-light">
+                        <h4>Short Answer</h4>
+                        
+                        <div class="mb-3">
+                            {{ form.correct_answer.label(class="form-label") }}
+                            {% if form.correct_answer.errors %}
+                                {{ form.correct_answer(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.correct_answer.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.correct_answer(class="form-control", placeholder="Enter the correct answer") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('admin.questions', quiz_id=quiz.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Questions
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionTypeSelect = document.getElementById('question_type');
+        const multipleChoiceSection = document.getElementById('multipleChoiceSection');
+        const trueFalseSection = document.getElementById('trueFalseSection');
+        const shortAnswerSection = document.getElementById('shortAnswerSection');
+        
+        function updateSections() {
+            const selectedType = questionTypeSelect.value;
+            
+            // Hide all sections first
+            multipleChoiceSection.style.display = 'none';
+            trueFalseSection.style.display = 'none';
+            shortAnswerSection.style.display = 'none';
+            
+            // Show the appropriate section based on the selected question type
+            if (selectedType === 'multiple_choice') {
+                multipleChoiceSection.style.display = 'block';
+            } else if (selectedType === 'true_false') {
+                trueFalseSection.style.display = 'block';
+            } else if (selectedType === 'short_answer') {
+                shortAnswerSection.style.display = 'block';
+            }
+        }
+        
+        // Initialize sections based on current selection
+        updateSections();
+        
+        // Update sections when selection changes
+        questionTypeSelect.addEventListener('change', updateSections);
+    });
+</script>
+{% endblock %}
+{% endblock %} 

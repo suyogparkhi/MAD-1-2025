@@ -3,16 +3,21 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="display-6">
-        <i class="fas fa-book-open"></i> Subjects
+        <i class="fas fa-book"></i> Chapters - {{ subject.name }}
     </h1>
-    <a href="{{ url_for('admin.create_subject') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add New Subject
-    </a>
+    <div>
+        <a href="{{ url_for('admin.subjects') }}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-arrow-left"></i> Back to Subjects
+        </a>
+        <a href="{{ url_for('admin.create_chapter', subject_id=subject.id) }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Chapter
+        </a>
+    </div>
 </div>
 
 <div class="card">
     <div class="card-body">
-        {% if subjects %}
+        {% if chapters %}
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -20,44 +25,44 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Description</th>
-                        <th>Chapters</th>
+                        <th>Quizzes</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for subject in subjects %}
+                    {% for chapter in chapters %}
                     <tr>
-                        <td>{{ subject.id }}</td>
-                        <td>{{ subject.name }}</td>
-                        <td>{{ subject.description|truncate(100) if subject.description else '-' }}</td>
-                        <td>{{ subject.chapters|length }}</td>
+                        <td>{{ chapter.id }}</td>
+                        <td>{{ chapter.name }}</td>
+                        <td>{{ chapter.description|truncate(100) if chapter.description else '-' }}</td>
+                        <td>{{ chapter.quizzes|length }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{{ url_for('admin.chapters', subject_id=subject.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-book"></i> Chapters
+                                <a href="{{ url_for('admin.quizzes', chapter_id=chapter.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-tasks"></i> Quizzes
                                 </a>
-                                <a href="{{ url_for('admin.edit_subject', id=subject.id) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ url_for('admin.edit_chapter', id=chapter.id) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ subject.id }}">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ chapter.id }}">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
                             
                             <!-- Delete Modal -->
-                            <div class="modal fade" id="deleteModal{{ subject.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ subject.id }}" aria-hidden="true">
+                            <div class="modal fade" id="deleteModal{{ chapter.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ chapter.id }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="deleteModalLabel{{ subject.id }}">Confirm Delete</h5>
+                                            <h5 class="modal-title" id="deleteModalLabel{{ chapter.id }}">Confirm Delete</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Are you sure you want to delete the subject "{{ subject.name }}"? This will also delete all associated chapters, quizzes, and questions.
+                                            Are you sure you want to delete the chapter "{{ chapter.name }}"? This will also delete all associated quizzes and questions.
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <form action="{{ url_for('admin.delete_subject', id=subject.id) }}" method="POST" style="display: inline;">
+                                            <form action="{{ url_for('admin.delete_chapter', id=chapter.id) }}" method="POST" style="display: inline;">
                                                 <button type="submit" class="btn btn-danger">Delete</button>
                                             </form>
                                         </div>
@@ -72,11 +77,11 @@
         </div>
         {% else %}
         <div class="text-center py-5">
-            <i class="fas fa-book-open text-muted mb-3" style="font-size: 3rem;"></i>
-            <h3>No Subjects Yet</h3>
-            <p class="text-muted">Get started by adding a new subject.</p>
-            <a href="{{ url_for('admin.create_subject') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add New Subject
+            <i class="fas fa-book text-muted mb-3" style="font-size: 3rem;"></i>
+            <h3>No Chapters Yet</h3>
+            <p class="text-muted">Get started by adding a new chapter to "{{ subject.name }}".</p>
+            <a href="{{ url_for('admin.create_chapter', subject_id=subject.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New Chapter
             </a>
         </div>
         {% endif %}

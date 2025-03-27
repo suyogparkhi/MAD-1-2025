@@ -9,6 +9,10 @@ from models.quiz import Quiz
 from models.question import Question
 from models.score import Score
 from forms.subject_forms import SubjectForm
+from forms.chapter_forms import ChapterForm
+from forms.quiz_forms import QuizForm
+from forms.question_forms import QuestionForm
+from datetime import datetime
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -97,4 +101,307 @@ def delete_subject(id):
     db.session.delete(subject)
     db.session.commit()
     flash('Subject deleted successfully!', 'success')
-    return redirect(url_for('admin.subjects')) 
+    return redirect(url_for('admin.subjects'))
+
+# Chapter routes
+@admin_bp.route('/subjects/<int:subject_id>/chapters')
+@login_required
+@admin_required
+def chapters(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    chapters = Chapter.query.filter_by(subject_id=subject_id).all()
+    return render_template('admin/chapters/index.html', 
+                          subject=subject, 
+                          chapters=chapters,
+                          title=f'Chapters - {subject.name}')
+
+@admin_bp.route('/subjects/<int:subject_id>/chapters/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_chapter(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    form = ChapterForm()
+    
+    # Preselect the subject
+    form.subject_id.data = subject_id
+    form.subject_id.choices = [(subject.id, subject.name)]
+    
+    if form.validate_on_submit():
+        chapter = Chapter(
+            name=form.name.data,
+            description=form.description.data,
+            subject_id=form.subject_id.data
+        )
+        db.session.add(chapter)
+        db.session.commit()
+        flash('Chapter created successfully!', 'success')
+        return redirect(url_for('admin.chapters', subject_id=subject_id))
+    
+    return render_template('admin/chapters/create.html', 
+                          form=form, 
+                          subject=subject,
+                          title=f'Create Chapter - {subject.name}')
+
+@admin_bp.route('/chapters/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_chapter(id):
+    chapter = Chapter.query.get_or_404(id)
+    form = ChapterForm(obj=chapter)
+    form.chapter_id = id  # Set to check in validation
+    
+    if form.validate_on_submit():
+        chapter.name = form.name.data
+        chapter.description = form.description.data
+        chapter.subject_id = form.subject_id.data
+        db.session.commit()
+        flash('Chapter updated successfully!', 'success')
+        return redirect(url_for('admin.chapters', subject_id=chapter.subject_id))
+    
+    return render_template('admin/chapters/edit.html', 
+                          form=form, 
+                          chapter=chapter,
+                          title=f'Edit Chapter - {chapter.name}')
+
+@admin_bp.route('/chapters/<int:id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_chapter(id):
+    chapter = Chapter.query.get_or_404(id)
+    subject_id = chapter.subject_id
+    db.session.delete(chapter)
+    db.session.commit()
+    flash('Chapter deleted successfully!', 'success')
+    return redirect(url_for('admin.chapters', subject_id=subject_id))
+
+# Quiz routes
+@admin_bp.route('/chapters/<int:chapter_id>/quizzes')
+@login_required
+@admin_required
+def quizzes(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
+    return render_template('admin/quizzes/index.html', 
+                          chapter=chapter, 
+                          quizzes=quizzes,
+                          title=f'Quizzes - {chapter.name}')
+
+@admin_bp.route('/chapters/<int:chapter_id>/quizzes/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_quiz(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    form = QuizForm()
+    
+    if form.validate_on_submit():
+        quiz = Quiz(
+            date_of_quiz=form.date_of_quiz.data,
+            time_duration=form.time_duration.data,
+            remarks=form.remarks.data,
+            chapter_id=chapter_id
+        )
+        db.session.add(quiz)
+        db.session.commit()
+        flash('Quiz created successfully!', 'success')
+        return redirect(url_for('admin.quizzes', chapter_id=chapter_id))
+    
+    return render_template('admin/quizzes/create.html', 
+                          form=form, 
+                          chapter=chapter,
+                          title=f'Create Quiz - {chapter.name}')
+
+@admin_bp.route('/quizzes/<int:quiz_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    form = QuizForm(obj=quiz)
+    
+    if form.validate_on_submit():
+        quiz.date_of_quiz = form.date_of_quiz.data
+        quiz.time_duration = form.time_duration.data
+        quiz.remarks = form.remarks.data
+        db.session.commit()
+        flash('Quiz updated successfully!', 'success')
+        return redirect(url_for('admin.quizzes', chapter_id=quiz.chapter_id))
+    
+    return render_template('admin/quizzes/edit.html', 
+                          form=form, 
+                          quiz=quiz,
+                          title=f'Edit Quiz')
+
+@admin_bp.route('/quizzes/<int:quiz_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    chapter_id = quiz.chapter_id
+    db.session.delete(quiz)
+    db.session.commit()
+    flash('Quiz deleted successfully!', 'success')
+    return redirect(url_for('admin.quizzes', chapter_id=chapter_id))
+
+# Question routes
+@admin_bp.route('/quizzes/<int:quiz_id>/questions')
+@login_required
+@admin_required
+def questions(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    return render_template('admin/questions/index.html', 
+                          quiz=quiz, 
+                          questions=questions,
+                          title=f'Questions - {quiz.chapter.name} Quiz')
+
+@admin_bp.route('/quizzes/<int:quiz_id>/questions/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_question(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    form = QuestionForm()
+    
+    if form.validate_on_submit():
+        # Create the question using the actual database schema fields
+        question = Question(
+            quiz_id=quiz_id,
+            question_statement=form.question_text.data,
+            option1=form.option_a.data or "",
+            option2=form.option_b.data or "",
+            option3=form.option_c.data or "",
+            option4=form.option_d.data or "",
+            correct_answer=1  # Default value
+        )
+        
+        # Set correct answer based on question type
+        if form.question_type.data == 'multiple_choice':
+            if form.correct_option.data == 'a':
+                question.correct_answer = 1
+            elif form.correct_option.data == 'b':
+                question.correct_answer = 2
+            elif form.correct_option.data == 'c':
+                question.correct_answer = 3
+            elif form.correct_option.data == 'd':
+                question.correct_answer = 4
+        elif form.question_type.data == 'true_false':
+            # For true/false, use option1 as 'True' and option2 as 'False'
+            question.option1 = "True"
+            question.option2 = "False"
+            question.option3 = ""
+            question.option4 = ""
+            question.correct_answer = 1 if form.correct_boolean.data == 'true' else 2
+        else:  # short_answer - use option1 as the correct answer
+            question.option1 = form.correct_answer.data or ""
+            question.option2 = ""
+            question.option3 = ""
+            question.option4 = ""
+            question.correct_answer = 1
+        
+        db.session.add(question)
+        db.session.commit()
+        flash('Question created successfully!', 'success')
+        return redirect(url_for('admin.questions', quiz_id=quiz_id))
+    
+    return render_template('admin/questions/create.html', 
+                          form=form, 
+                          quiz=quiz,
+                          title=f'Create Question')
+
+@admin_bp.route('/questions/<int:question_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    
+    # Determine question type and populate form accordingly
+    question_type = 'multiple_choice'  # Default
+    
+    # True/False check
+    if question.option1 == "True" and question.option2 == "False" and not question.option3 and not question.option4:
+        question_type = 'true_false'
+    # Short answer check
+    elif question.option2 == "" and question.option3 == "" and question.option4 == "":
+        question_type = 'short_answer'
+    
+    # Create form and populate it
+    form = QuestionForm(
+        question_text=question.question_statement,
+        question_type=question_type,
+        difficulty='medium',  # Default since the original model doesn't have this
+        marks=1  # Default since the original model doesn't have this
+    )
+    
+    # Set form fields based on question type
+    if question_type == 'multiple_choice':
+        form.option_a.data = question.option1
+        form.option_b.data = question.option2
+        form.option_c.data = question.option3
+        form.option_d.data = question.option4
+        
+        # Set correct option
+        if question.correct_answer == 1:
+            form.correct_option.data = 'a'
+        elif question.correct_answer == 2:
+            form.correct_option.data = 'b'
+        elif question.correct_answer == 3:
+            form.correct_option.data = 'c'
+        elif question.correct_answer == 4:
+            form.correct_option.data = 'd'
+    elif question_type == 'true_false':
+        form.correct_boolean.data = 'true' if question.correct_answer == 1 else 'false'
+    else:  # short_answer
+        form.correct_answer.data = question.option1
+    
+    if form.validate_on_submit():
+        # Update the question with existing schema fields
+        question.question_statement = form.question_text.data
+        
+        if form.question_type.data == 'multiple_choice':
+            question.option1 = form.option_a.data or ""
+            question.option2 = form.option_b.data or ""
+            question.option3 = form.option_c.data or ""
+            question.option4 = form.option_d.data or ""
+            
+            # Set correct answer based on selected option
+            if form.correct_option.data == 'a':
+                question.correct_answer = 1
+            elif form.correct_option.data == 'b':
+                question.correct_answer = 2
+            elif form.correct_option.data == 'c':
+                question.correct_answer = 3
+            elif form.correct_option.data == 'd':
+                question.correct_answer = 4
+            else:
+                question.correct_answer = 1  # Default to option 1
+        elif form.question_type.data == 'true_false':
+            # For true/false, use option1 as 'True' and option2 as 'False'
+            question.option1 = "True"
+            question.option2 = "False"
+            question.option3 = ""
+            question.option4 = ""
+            question.correct_answer = 1 if form.correct_boolean.data == 'true' else 2
+        else:  # short_answer - use option1 as the correct answer
+            question.option1 = form.correct_answer.data or ""
+            question.option2 = ""
+            question.option3 = ""
+            question.option4 = ""
+            question.correct_answer = 1
+        
+        db.session.commit()
+        flash('Question updated successfully!', 'success')
+        return redirect(url_for('admin.questions', quiz_id=question.quiz_id))
+    
+    return render_template('admin/questions/edit.html', 
+                          form=form, 
+                          question=question,
+                          title=f'Edit Question')
+
+@admin_bp.route('/questions/<int:question_id>/delete')
+@login_required
+@admin_required
+def delete_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    quiz_id = question.quiz_id
+    db.session.delete(question)
+    db.session.commit()
+    flash('Question deleted successfully!', 'success')
+    return redirect(url_for('admin.questions', quiz_id=quiz_id)) 

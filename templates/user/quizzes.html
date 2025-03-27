@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="display-6">
+        <i class="fas fa-tasks"></i> Quizzes - {{ chapter.name }}
+    </h1>
+    <a href="{{ url_for('user.chapters', subject_id=chapter.subject_id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Back to Chapters
+    </a>
+</div>
+
+<div class="row">
+    {% if quizzes %}
+        {% for quiz in quizzes %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quiz #{{ quiz.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><strong>Date:</strong> {{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}</li>
+                        <li><strong>Duration:</strong> {{ quiz.time_duration }}</li>
+                        <li><strong>Questions:</strong> {{ quiz.total_questions }}</li>
+                    </ul>
+                    {% if quiz.remarks %}
+                        <p class="card-text">{{ quiz.remarks }}</p>
+                    {% endif %}
+                    
+                    {% if quiz.attempted %}
+                        <div class="alert alert-success">
+                            <strong>Attempted!</strong> Your score: {{ quiz.score }} / {{ quiz.total_questions }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white">
+                    {% if quiz.attempted %}
+                        <a href="{{ url_for('user.take_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-sync-alt"></i> Retake Quiz
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('user.take_quiz', quiz_id=quiz.id) }}" class="btn btn-primary w-100">
+                            <i class="fas fa-play"></i> Start Quiz
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i> No quizzes are available for this chapter.
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
