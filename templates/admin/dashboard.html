@@ -1,0 +1,148 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-6">
+            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+        </h1>
+        <p class="lead">Welcome back, {{ current_user.full_name }}!</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-users mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ users_count }}</div>
+                <div class="stat-label">Registered Users</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-book-open mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ subjects_count }}</div>
+                <div class="stat-label">Subjects</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-tasks mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ quizzes_count }}</div>
+                <div class="stat-label">Quizzes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-book mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ chapters_count }}</div>
+                <div class="stat-label">Chapters</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-question-circle mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ questions_count }}</div>
+                <div class="stat-label">Questions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <i class="fas fa-clipboard-check mb-2 text-primary" style="font-size: 2rem;"></i>
+                <div class="stat-number">{{ attempts_count }}</div>
+                <div class="stat-label">Quiz Attempts</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('admin.subjects') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-book-open"></i> Manage Subjects
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="#" class="btn btn-primary w-100">
+                            <i class="fas fa-puzzle-piece"></i> Manage Quizzes
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="#" class="btn btn-primary w-100">
+                            <i class="fas fa-users"></i> Manage Users
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="#" class="btn btn-primary w-100">
+                            <i class="fas fa-chart-bar"></i> View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Quiz Attempts -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Quiz Attempts</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_scores %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in recent_scores %}
+                            <tr>
+                                <td>{{ score.user.full_name }}</td>
+                                <td>{{ score.quiz.chapter.name }}</td>
+                                <td>{{ score.total_scored }} / {{ score.quiz.total_questions }}</td>
+                                <td>{{ score.time_stamp_of_attempt.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No quiz attempts yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
