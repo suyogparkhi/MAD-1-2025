@@ -12,7 +12,7 @@ from forms.subject_forms import SubjectForm
 from forms.chapter_forms import ChapterForm
 from forms.quiz_forms import QuizForm
 from forms.question_forms import QuestionForm
-from datetime import datetime
+from datetime import datetime, timedelta
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -41,6 +41,72 @@ def dashboard():
     # Get recent scores
     recent_scores = Score.query.order_by(Score.time_stamp_of_attempt.desc()).limit(10).all()
     
+    # Get subjects for performance summary
+    subjects = Subject.query.all()
+    
+    # Calculate subject attempt counts and average scores
+    subject_attempts = {}
+    subject_avg_scores = {}
+    
+    for subject in subjects:
+        # Get chapters in this subject
+        chapter_ids = [chapter.id for chapter in subject.chapters]
+        
+        # Get quizzes in these chapters
+        quiz_ids = []
+        for chapter_id in chapter_ids:
+            chapter_quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
+            quiz_ids.extend([quiz.id for quiz in chapter_quizzes])
+        
+        # Get scores for these quizzes
+        attempts = Score.query.filter(Score.quiz_id.in_(quiz_ids)).count() if quiz_ids else 0
+        subject_attempts[subject.id] = attempts
+        
+        # Calculate average score percentage
+        if attempts > 0:
+            scores = Score.query.filter(Score.quiz_id.in_(quiz_ids)).all()
+            total_percentage = 0
+            for score in scores:
+                quiz = Quiz.query.get(score.quiz_id)
+                if quiz and quiz.total_questions > 0:  # Avoid division by zero
+                    percentage = (score.total_scored / quiz.total_questions) * 100
+                    total_percentage += percentage
+            subject_avg_scores[subject.id] = total_percentage / attempts if attempts > 0 else 0
+        else:
+            subject_avg_scores[subject.id] = 0
+    
+    # Calculate score distribution for chart
+    score_ranges = [0, 0, 0, 0]  # [0-39%, 40-59%, 60-79%, 80-100%]
+    
+    all_scores = Score.query.all()
+    for score in all_scores:
+        quiz = Quiz.query.get(score.quiz_id)
+        if quiz and quiz.total_questions > 0:  # Avoid division by zero
+            percentage = (score.total_scored / quiz.total_questions) * 100
+            if percentage < 40:
+                score_ranges[0] += 1
+            elif percentage < 60:
+                score_ranges[1] += 1
+            elif percentage < 80:
+                score_ranges[2] += 1
+            else:
+                score_ranges[3] += 1
+    
+    # Calculate daily activity for the past 7 days
+    daily_attempts = [0] * 7
+    today = datetime.utcnow().date()
+    
+    for i in range(7):
+        day = today - timedelta(days=i)
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = datetime.combine(day, datetime.max.time())
+        count = Score.query.filter(
+            Score.time_stamp_of_attempt >= day_start,
+            Score.time_stamp_of_attempt <= day_end
+        ).count()
+        # Store in reverse order (for chart display)
+        daily_attempts[6-i] = count
+    
     return render_template('admin/dashboard.html',
                           users_count=users_count,
                           subjects_count=subjects_count,
@@ -49,6 +115,11 @@ def dashboard():
                           questions_count=questions_count,
                           attempts_count=attempts_count,
                           recent_scores=recent_scores,
+                          subjects=subjects,
+                          subject_attempts=subject_attempts,
+                          subject_avg_scores=subject_avg_scores,
+                          score_ranges=score_ranges,
+                          daily_attempts=daily_attempts,
                           title='Admin Dashboard')
 
 # Subject routes

@@ -10,41 +10,175 @@
     </div>
 </div>
 
-<!-- Stats Row -->
+<!-- User Progress Summary -->
 <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card stat-card">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Your Quiz Progress</h5>
+            </div>
             <div class="card-body">
-                <i class="fas fa-tasks mb-2 text-primary" style="font-size: 2rem;"></i>
-                <div class="stat-number">{{ total_quizzes }}</div>
-                <div class="stat-label">Available Quizzes</div>
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h6 class="mb-1">Completion Rate</h6>
+                        <p class="mb-0 text-muted small">Quizzes attempted vs. total available</p>
+                    </div>
+                    <div class="ms-auto text-end">
+                        <h3 class="mb-0">
+                            {% if total_quizzes > 0 %}
+                                {{ ((attempted_quizzes / total_quizzes) * 100)|round }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+                
+                <div class="progress mb-4" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {% if total_quizzes > 0 %}{{ (attempted_quizzes / total_quizzes) * 100 }}{% else %}0{% endif %}%;" 
+                         aria-valuenow="{% if total_quizzes > 0 %}{{ (attempted_quizzes / total_quizzes) * 100 }}{% else %}0{% endif %}" 
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <h3 class="text-primary">{{ attempted_quizzes }}</h3>
+                            <p class="mb-0 text-muted">Quizzes Attempted</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 border rounded">
+                            <h3 class="text-primary">{{ total_quizzes }}</h3>
+                            <p class="mb-0 text-muted">Total Quizzes</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card stat-card">
+    
+    <div class="col-lg-6">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-award me-2"></i>Performance Overview</h5>
+            </div>
             <div class="card-body">
-                <i class="fas fa-clipboard-check mb-2 text-primary" style="font-size: 2rem;"></i>
-                <div class="stat-number">{{ attempted_quizzes }}</div>
-                <div class="stat-label">Attempted Quizzes</div>
+                <canvas id="performanceChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Recommendations -->
+<div class="row mb-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_scores %}
+                <div class="list-group list-group-flush">
+                    {% for score in recent_scores %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ score.quiz.chapter.name }}</h6>
+                                <p class="mb-0 text-muted small">
+                                    <i class="fas fa-calendar-alt me-1"></i> {{ score.time_stamp_of_attempt.strftime('%b %d, %Y at %H:%M') }}
+                                </p>
+                            </div>
+                            <div class="text-end">
+                                {% set percent = (score.total_scored / score.quiz.total_questions * 100)|round %}
+                                <h5 class="mb-0">
+                                    {% if percent >= 80 %}
+                                    <span class="badge bg-success">{{ percent }}%</span>
+                                    {% elif percent >= 60 %}
+                                    <span class="badge bg-primary">{{ percent }}%</span>
+                                    {% elif percent >= 40 %}
+                                    <span class="badge bg-warning">{{ percent }}%</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ percent }}%</span>
+                                    {% endif %}
+                                </h5>
+                                <a href="{{ url_for('user.results', score_id=score.id) }}" class="btn btn-sm btn-link p-0 mt-1">
+                                    View Details <i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-info-circle text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>No quiz attempts yet</h5>
+                    <p class="text-muted">Start taking quizzes to track your progress!</p>
+                </div>
+                {% endif %}
+            </div>
+            {% if recent_scores %}
+            <div class="card-footer bg-white text-center">
+                <a href="#" class="btn btn-outline-primary btn-sm">View All Activity</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommended Quizzes</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recommended_quizzes is defined and recommended_quizzes %}
+                <div class="list-group list-group-flush">
+                    {% for quiz in recommended_quizzes %}
+                    <div class="list-group-item">
+                        <h6 class="mb-1">{{ quiz.chapter.name }}</h6>
+                        <p class="mb-2 text-muted small">{{ quiz.chapter.subject.name }}</p>
+                        <div class="d-grid">
+                            <a href="{{ url_for('user.take_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-play-circle me-1"></i> Take Quiz
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-book text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5>Explore Available Quizzes</h5>
+                    <p class="text-muted">Recommendations will appear based on your activity.</p>
+                    <a href="{{ url_for('user.subjects') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-search me-1"></i> Browse Subjects
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Subjects -->
-<div class="row mb-4">
+<div class="row">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Available Subjects</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-book-open me-2"></i>Available Subjects</h5>
             </div>
             <div class="card-body">
                 {% if subjects %}
                     <div class="row">
                         {% for subject in subjects %}
                         <div class="col-md-4 mb-3">
-                            <div class="card h-100">
+                            <div class="card h-100 border-0 shadow-sm">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ subject.name }}</h5>
                                     <p class="card-text text-truncate-2">{{ subject.description }}</p>
@@ -65,47 +199,53 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Recent Attempts -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Recent Quiz Attempts</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_scores %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Quiz</th>
-                                <th>Score</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for score in recent_scores %}
-                            <tr>
-                                <td>{{ score.quiz.chapter.name }}</td>
-                                <td>{{ score.total_scored }} / {{ score.quiz.total_questions }}</td>
-                                <td>{{ score.time_stamp_of_attempt.strftime('%Y-%m-%d %H:%M') }}</td>
-                                <td>
-                                    <a href="{{ url_for('user.results', score_id=score.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> View Results
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-center">You haven't attempted any quizzes yet.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Performance Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent (80-100%)', 'Good (60-79%)', 'Fair (40-59%)', 'Needs Improvement (0-39%)'],
+                datasets: [{
+                    data: [
+                        {{ performance_data.excellent if performance_data is defined and performance_data.excellent is defined else 0 }},
+                        {{ performance_data.good if performance_data is defined and performance_data.good is defined else 0 }},
+                        {{ performance_data.fair if performance_data is defined and performance_data.fair is defined else 0 }},
+                        {{ performance_data.needs_improvement if performance_data is defined and performance_data.needs_improvement is defined else 0 }}
+                    ],
+                    backgroundColor: [
+                        'rgba(25, 135, 84, 0.7)',  // green for excellent
+                        'rgba(13, 110, 253, 0.7)', // blue for good
+                        'rgba(255, 193, 7, 0.7)',  // yellow for fair
+                        'rgba(220, 53, 69, 0.7)'   // red for needs improvement
+                    ],
+                    borderColor: [
+                        'rgb(25, 135, 84)',
+                        'rgb(13, 110, 253)',
+                        'rgb(255, 193, 7)',
+                        'rgb(220, 53, 69)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Your Performance Distribution'
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %} 

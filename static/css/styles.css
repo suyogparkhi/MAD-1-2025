@@ -165,6 +165,81 @@ footer {
     height: 300px;
 }
 
+/* Enhanced Dashboard Styles */
+.card.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    transition: all 0.3s ease;
+}
+
+.card.shadow-sm:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card .card-header.bg-primary {
+    color: white;
+    border-bottom: 0;
+}
+
+.card .card-header.bg-light {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.progress {
+    border-radius: 0.5rem;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    transition: width 1s ease;
+}
+
+.list-group-item {
+    border-left: 0;
+    border-right: 0;
+    padding: 1rem 1.25rem;
+}
+
+.list-group-item:first-child {
+    border-top: 0;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+/* Performance colors */
+.performance-excellent {
+    color: #198754;
+}
+
+.performance-good {
+    color: #0d6efd;
+}
+
+.performance-fair {
+    color: #ffc107;
+}
+
+.performance-poor {
+    color: #dc3545;
+}
+
+.btn-link {
+    text-decoration: none;
+    color: #0d6efd;
+}
+
+.btn-link:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
 /* Utils */
 .list-group-item-action:hover {
     background-color: #f8f9fa;
