@@ -1,0 +1,1169 @@
+openapi: 3.0.3
+info:
+  title: Quiz Master API
+  description: |
+    API for the Quiz Master application. This API allows users to authenticate, 
+    access quizzes, submit answers, and view scores. Administrators can manage 
+    subjects, chapters, quizzes, and questions.
+  version: 1.0.0
+  contact:
+    name: Quiz Master Support
+    email: support@quizmaster.example.com
+
+servers:
+  - url: /api/v1
+    description: API endpoint for Quiz Master
+
+tags:
+  - name: Authentication
+    description: Authentication operations
+  - name: Users
+    description: User operations
+  - name: Admin
+    description: Admin operations
+  - name: Subjects
+    description: Subject operations
+  - name: Chapters
+    description: Chapter operations
+  - name: Quizzes
+    description: Quiz operations
+  - name: Questions
+    description: Question operations
+  - name: Scores
+    description: Score operations
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        full_name:
+          type: string
+        qualification:
+          type: string
+        dob:
+          type: string
+          format: date
+        role:
+          type: string
+          enum: [user, admin]
+    
+    Subject:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+    
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        subject_id:
+          type: integer
+          format: int64
+    
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        time_limit:
+          type: integer
+        total_questions:
+          type: integer
+        chapter_id:
+          type: integer
+          format: int64
+    
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        question_text:
+          type: string
+        option_1:
+          type: string
+        option_2:
+          type: string
+        option_3:
+          type: string
+        option_4:
+          type: string
+        correct_answer:
+          type: integer
+          enum: [1, 2, 3, 4]
+        quiz_id:
+          type: integer
+          format: int64
+    
+    Score:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        quiz_id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        time_stamp_of_attempt:
+          type: string
+          format: date-time
+        total_scored:
+          type: integer
+    
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate a user and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                remember:
+                  type: boolean
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                confirm_password:
+                  type: string
+                full_name:
+                  type: string
+                qualification:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+              required:
+                - username
+                - password
+                - confirm_password
+                - full_name
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate JWT token
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/dashboard:
+    get:
+      tags:
+        - Users
+      summary: User dashboard data
+      description: Get user dashboard statistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_quizzes:
+                    type: integer
+                  attempted_quizzes:
+                    type: integer
+                  subjects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Subject'
+                  recent_scores:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Score'
+                  performance_data:
+                    type: object
+                    properties:
+                      excellent:
+                        type: integer
+                      good:
+                        type: integer
+                      fair:
+                        type: integer
+                      needs_improvement:
+                        type: integer
+                  recommended_quizzes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subjects:
+    get:
+      tags:
+        - Subjects
+      summary: Get all subjects
+      description: Retrieve all available subjects
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+
+  /subjects/{subject_id}:
+    get:
+      tags:
+        - Subjects
+      summary: Get subject details
+      description: Retrieve details of a specific subject
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subject_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subject details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '404':
+          description: Subject not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /subjects/{subject_id}/chapters:
+    get:
+      tags:
+        - Chapters
+      summary: Get chapters for a subject
+      description: Retrieve all chapters for a specific subject
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subject_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of chapters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chapter'
+        '404':
+          description: Subject not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chapters/{chapter_id}/quizzes:
+    get:
+      tags:
+        - Quizzes
+      summary: Get quizzes for a chapter
+      description: Retrieve all quizzes for a specific chapter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: chapter_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Quiz'
+        '404':
+          description: Chapter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /quizzes/{quiz_id}:
+    get:
+      tags:
+        - Quizzes
+      summary: Get quiz details
+      description: Retrieve details and questions for a specific quiz
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quiz_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Quiz details and questions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Quiz'
+                  - type: object
+                    properties:
+                      questions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Question'
+                      previous_attempt:
+                        $ref: '#/components/schemas/Score'
+        '404':
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /quizzes/{quiz_id}/submit:
+    post:
+      tags:
+        - Quizzes
+      summary: Submit quiz answers
+      description: Submit answers for a quiz and receive score
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quiz_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: integer
+                description: Question ID to selected answer mapping
+      responses:
+        '200':
+          description: Quiz submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  score_id:
+                    type: integer
+                  total_score:
+                    type: integer
+                  total_questions:
+                    type: integer
+        '400':
+          description: Invalid submission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /results/{score_id}:
+    get:
+      tags:
+        - Scores
+      summary: Get quiz results
+      description: Retrieve detailed results for a quiz attempt
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: score_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Quiz results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  score:
+                    $ref: '#/components/schemas/Score'
+                  quiz:
+                    $ref: '#/components/schemas/Quiz'
+                  questions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Question'
+        '403':
+          description: Not authorized to view these results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Score not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Admin API endpoints
+  /admin/subjects:
+    get:
+      tags:
+        - Admin
+        - Subjects
+      summary: Admin - Get all subjects
+      description: Admin endpoint to get all subjects
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of subjects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      tags:
+        - Admin
+        - Subjects
+      summary: Admin - Create subject
+      description: Admin endpoint to create a new subject
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+      responses:
+        '201':
+          description: Subject created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/subjects/{id}:
+    put:
+      tags:
+        - Admin
+        - Subjects
+      summary: Admin - Update subject
+      description: Admin endpoint to update a subject
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+                - name
+      responses:
+        '200':
+          description: Subject updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subject not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+    delete:
+      tags:
+        - Admin
+        - Subjects
+      summary: Admin - Delete subject
+      description: Admin endpoint to delete a subject
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Subject deleted successfully
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Subject not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/chapters:
+    post:
+      tags:
+        - Admin
+        - Chapters
+      summary: Admin - Create chapter
+      description: Admin endpoint to create a new chapter
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                subject_id:
+                  type: integer
+              required:
+                - name
+                - subject_id
+      responses:
+        '201':
+          description: Chapter created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/chapters/{id}:
+    put:
+      tags:
+        - Admin
+        - Chapters
+      summary: Admin - Update chapter
+      description: Admin endpoint to update a chapter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                subject_id:
+                  type: integer
+              required:
+                - name
+                - subject_id
+      responses:
+        '200':
+          description: Chapter updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Chapter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+    delete:
+      tags:
+        - Admin
+        - Chapters
+      summary: Admin - Delete chapter
+      description: Admin endpoint to delete a chapter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Chapter deleted successfully
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Chapter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/quizzes:
+    post:
+      tags:
+        - Admin
+        - Quizzes
+      summary: Admin - Create quiz
+      description: Admin endpoint to create a new quiz
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                time_limit:
+                  type: integer
+                chapter_id:
+                  type: integer
+              required:
+                - title
+                - chapter_id
+      responses:
+        '201':
+          description: Quiz created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/quizzes/{id}:
+    put:
+      tags:
+        - Admin
+        - Quizzes
+      summary: Admin - Update quiz
+      description: Admin endpoint to update a quiz
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                time_limit:
+                  type: integer
+                chapter_id:
+                  type: integer
+              required:
+                - title
+                - chapter_id
+      responses:
+        '200':
+          description: Quiz updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+    delete:
+      tags:
+        - Admin
+        - Quizzes
+      summary: Admin - Delete quiz
+      description: Admin endpoint to delete a quiz
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Quiz deleted successfully
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/questions:
+    post:
+      tags:
+        - Admin
+        - Questions
+      summary: Admin - Create question
+      description: Admin endpoint to create a new question
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question_text:
+                  type: string
+                option_1:
+                  type: string
+                option_2:
+                  type: string
+                option_3:
+                  type: string
+                option_4:
+                  type: string
+                correct_answer:
+                  type: integer
+                  enum: [1, 2, 3, 4]
+                quiz_id:
+                  type: integer
+              required:
+                - question_text
+                - option_1
+                - option_2
+                - option_3
+                - option_4
+                - correct_answer
+                - quiz_id
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/questions/{id}:
+    put:
+      tags:
+        - Admin
+        - Questions
+      summary: Admin - Update question
+      description: Admin endpoint to update a question
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question_text:
+                  type: string
+                option_1:
+                  type: string
+                option_2:
+                  type: string
+                option_3:
+                  type: string
+                option_4:
+                  type: string
+                correct_answer:
+                  type: integer
+                  enum: [1, 2, 3, 4]
+                quiz_id:
+                  type: integer
+              required:
+                - question_text
+                - option_1
+                - option_2
+                - option_3
+                - option_4
+                - correct_answer
+                - quiz_id
+      responses:
+        '200':
+          description: Question updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+    delete:
+      tags:
+        - Admin
+        - Questions
+      summary: Admin - Delete question
+      description: Admin endpoint to delete a question
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Question deleted successfully
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /admin/statistics:
+    get:
+      tags:
+        - Admin
+      summary: Admin - Get statistics
+      description: Admin endpoint to get application statistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Application statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users_count:
+                    type: integer
+                  subjects_count:
+                    type: integer
+                  chapters_count:
+                    type: integer
+                  quizzes_count:
+                    type: integer
+                  questions_count:
+                    type: integer
+                  attempts_count:
+                    type: integer
+                  recent_scores:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Score'
+                  subject_performance:
+                    type: object
+                    additionalProperties:
+                      type: object
+                      properties:
+                        attempts:
+                          type: integer
+                        avg_score:
+                          type: number
+                          format: float
+                  score_distribution:
+                    type: array
+                    items:
+                      type: integer
+                  daily_activity:
+                    type: array
+                    items:
+                      type: integer
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
